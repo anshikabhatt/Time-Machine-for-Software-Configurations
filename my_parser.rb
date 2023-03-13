@@ -1,4 +1,4 @@
-require_relative 'parser'
+require_relative File.expand_path('my_parser', __dir__)
 
 tm = TimeMachine.new('C:/Users/Az/evolutionOverTime')
 snapshots = tm.snapshots
