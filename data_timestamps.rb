@@ -4,6 +4,7 @@ require 'csv'
 sequence = CSV.read('sequence.csv', headers: true)
 
 # Sort the sequence by timestamp in descending order
+sequence = CSV.read('sequence.csv', headers: true)
 sequence.sort_by! { |row| row['timestamp'] }.reverse!
 
 # Create an empty hash to store the most recent temperature for each city
@@ -27,10 +28,12 @@ sequence.each do |row|
   latest_temperatures[city + '_timestamp'] = row['timestamp']
 end
 
-# Output the latest temperature data for each city
-puts "city,temperature"
-latest_temperatures.each do |city, temperature|
-  if !city.include?('_timestamp')
-    puts "#{city},#{temperature}"
+# Add the latest temperature data for each city to a CSV file with a timestamp
+CSV.open('latest_temperatures.csv', 'a') do |csv|
+  csv << ['timestamp', 'city', 'temperature']
+  latest_temperatures.each do |city, temperature|
+    if !city.include?('_timestamp')
+      csv << [Time.now, city, temperature]
+    end
   end
 end
