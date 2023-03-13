@@ -4,7 +4,6 @@ require 'csv'
 sequence = CSV.read('sequence.csv', headers: true)
 
 # Sort the sequence by timestamp in descending order
-sequence = CSV.read('sequence.csv', headers: true)
 sequence.sort_by! { |row| row['timestamp'] }.reverse!
 
 # Create an empty hash to store the most recent temperature for each city
