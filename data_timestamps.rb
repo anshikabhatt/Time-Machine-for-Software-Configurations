@@ -1,39 +1,49 @@
 require 'csv'
+require 'git'
 
 # Load the sequence CSV file into memory
 sequence = CSV.read('sequence.csv', headers: true)
 
-# Sort the sequence by timestamp in descending order
-sequence = CSV.read('sequence.csv', headers: true)
-sequence.sort_by! { |row| row['timestamp'] }.reverse!
-
-# Create an empty hash to store the most recent temperature for each city
-latest_temperatures = {}
+# Create an empty hash to store the temperature data for each city and timestamp
+temperature_data = {}
 
 # Iterate over each row in the sequence
 sequence.each do |row|
   city = row['city']
   temperature = row['temperature']
+  timestamp = row['timestamp']
 
-  # If we haven't seen this city before, add it to the hash with the current temperature
-  if !latest_temperatures[city]
-    latest_temperatures[city] = temperature
-
-  # If we have seen this city before, update the temperature if the current timestamp is more recent
-  elsif row['timestamp'] > latest_temperatures[city + '_timestamp']
-    latest_temperatures[city] = temperature
+  # If we haven't seen this city before, create a new hash for it
+  if !temperature_data[city]
+    temperature_data[city] = {}
   end
 
-  # Store the timestamp for this city
-  latest_temperatures[city + '_timestamp'] = row['timestamp']
+  # Add the temperature for this city and timestamp
+  temperature_data[city][timestamp] = temperature
 end
 
-# Add the latest temperature data for each city to a CSV file with a timestamp
-CSV.open('latest_temperatures.csv', 'a') do |csv|
+# Create an empty array to store the timestamps
+timestamps = []
+
+# Use Git to get the list of commit timestamps
+g = Git.open('.')
+g.log.each do |commit|
+  timestamps << commit.date
+end
+
+# Add the temperature data for each timestamp to a CSV file
+CSV.open('temperature_data.csv', 'w') do |csv|
   csv << ['timestamp', 'city', 'temperature']
-  latest_temperatures.each do |city, temperature|
-    if !city.include?('_timestamp')
-      csv << [Time.now, city, temperature]
+  timestamps.each do |timestamp|
+    temperature_data.each do |city, data|
+      temperature = data[timestamp]
+
+      # If there is no temperature data for this city and timestamp, write a row indicating no data is available
+      if !temperature
+        csv << [timestamp, city, 'No data available']
+      else
+        csv << [timestamp, city, temperature]
+      end
     end
   end
 end
