@@ -1,5 +1,6 @@
 require 'csv'
 require 'git'
+require 'time'
 
 # Load the sequence CSV file into memory
 sequence = CSV.read('sequence.csv', headers: true)
@@ -11,15 +12,15 @@ temperature_data = {}
 sequence.each do |row|
   city = row['city']
   temperature = row['temperature']
-  timestamp = row['timestamp']
+
+  # Convert temperature to a float if it is not nil
+  temperature = temperature.to_f if temperature
 
   # If we haven't seen this city before, create a new hash for it
-  if !temperature_data[city]
-    temperature_data[city] = {}
-  end
+  temperature_data[city] ||= {}
 
-  # Add the temperature for this city and timestamp
-  temperature_data[city][timestamp] = temperature
+  # Add the temperature for this city and current timestamp
+  temperature_data[city][Time.now.iso8601] = temperature
 end
 
 # Create an empty array to store the timestamps
@@ -28,7 +29,7 @@ timestamps = []
 # Use Git to get the list of commit timestamps
 g = Git.open('.')
 g.log.each do |commit|
-  timestamps << commit.date
+  timestamps << commit.date.iso8601
 end
 
 # Add the temperature data for each timestamp to a CSV file
@@ -47,3 +48,4 @@ CSV.open('temperature_data.csv', 'w') do |csv|
     end
   end
 end
+
